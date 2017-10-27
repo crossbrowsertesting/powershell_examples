@@ -24,18 +24,22 @@ Get-Content urlList.txt | ForEach-Object {
     $params = @{url="$($url)"}
     $reqResponse = Invoke-WebRequest -Uri $requestUrl -Method POST -Headers $Headers -Body $params | ConvertFrom-JSON
     
-    # Prevent the next test from starting until 30 seconds after this one is done.
+    # Prevent the next test from starting until 5 seconds after this one is done.
     $session = $reqResponse.screenshot_test_id
+    Write-Host $session
     $version = $reqResponse.versions.version_id
+    Write-Host $version
     $running = "True"
-    while($running -ne "False")
+    while($running -ne $false)
     {
-        Write-Host "Polling..."
+	#Debug
+        # Write-Host "Polling..."
         $status = Invoke-WebRequest -Uri "https://crossbrowsertesting.com/api/v3/screenshots/$($session)/$($version)" -Headers $Headers -Method GET | ConvertFrom-JSON
         $running = $status.versions.active
-        Write-Host "Test Still Active: $($running)"
-        Start-Sleep -s 30 
+        #Debug
+        # Write-Host "Test Still Active: $($running)"
+        Start-Sleep -s 15 
     }
     Write-Host "Test Completed, waiting for processing to finish"
-    Start-Sleep -s 30
+    Start-Sleep -s 5
 }
