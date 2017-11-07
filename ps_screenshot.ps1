@@ -4,6 +4,8 @@ Add-Type -AssemblyName System.Web
 $username = "you@yourDomain.com"
 $authKey = "yourActualAuthKey"
 
+$basic_auth = GetContent -Raw ./basic_auth.json | ConvertFrom-Json
+
 # This is used for doing the HTTP basic authentication we use.  This converts the strings into a HTTP header.
 $Headers = @{ Authorization = "Basic {0}" -f [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $username,$authKey))) }
 
@@ -21,7 +23,12 @@ Get-Content urlList.txt | ForEach-Object {
     $url = $_
     $requestUrl = "https://$($apiEndpoint)/$($browserString)send_email=false"
     Write-Host "Sending screenshot request for $($url)"
-    $params = @{url="$($url)"}
+    $parameters = @{url="$($url)"}
+    if ($basic_auth.enable -eq $true) {
+        $parameters += @{basic_username="$($basic_auth.auth_user)"}
+        $parameters += @{basic_password="$($basic_auth.auth_pass)"}
+    }
+    $params = $parameters
     $reqResponse = Invoke-WebRequest -Uri $requestUrl -Method POST -Headers $Headers -Body $params | ConvertFrom-JSON
     
     # Prevent the next test from starting until 5 seconds after this one is done.
